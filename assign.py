@@ -234,23 +234,23 @@ mask3 = mask3.transpose((1,2,0))
 
 #-----------------------------------------------------------------
 
-# Collect features
+# Collect feature
 
 n=1000;
 
 
-dictionarySize = 50
+dictionarySize = 40
 BOW = np.zeros((n*84,128))
 counter = 0
 
 for i in range(n):
     
     segmentedUser = data['segmentation'][i]
-    sourceImg = data['rgb'][i]
+    sourceImg = data['depth'][i]
     mask2 = np.mean(segmentedUser, axis=2) > 150 # For depth images.
     mask3 = np.tile(mask2, (3,1,1)) # For 3-channel images (rgb)
     mask3 = mask3.transpose((1,2,0))
-    img = sourceImg *mask3
+    img = sourceImg *mask2
     img = img[:, 10:-10]
     sift = cv2.xfeatures2d.SIFT_create()
     # Create grid of key points.
@@ -260,42 +260,33 @@ for i in range(n):
     
     # Given the list of keypoints, compute the local descriptions for every keypoint.
     (kp, descriptions) = sift.compute(img, keypointGrid)
-   # print(descriptions)
+    print(descriptions.shape)
    # print(counter) 
     for row in range(84):
         BOW[counter]=descriptions[row,:]
         counter = counter+1
 
-np.save('testrgb.npy',BOW)
-print("saved")
+#np.save('testrgb.npy',BOW)
+#print("saved")
 
 #dictionary created
 dictionary = MiniBatchKMeans(init='k-means++', n_clusters=dictionarySize, batch_size=50)
 dictionary.fit(BOW)
 print(len(dictionary.cluster_centers_))
 
+
+
+BOW = np.reshape(BOW,(n,84*128)) 
 features = np.zeros((n,dictionarySize))
 
 for i in range(n):
     
-    segmentedUser = data['segmentation'][i]
-    sourceImg = data['rgb'][i]
-    mask2 = np.mean(segmentedUser, axis=2) > 150 # For depth images.
-    mask3 = np.tile(mask2, (3,1,1)) # For 3-channel images (rgb)
-    mask3 = mask3.transpose((1,2,0))
-    img = sourceImg *mask3	
-    img = img[:, 10:-10]
-    sift = cv2.xfeatures2d.SIFT_create()
-    # Create grid of key points.
-    keypointGrid = [cv2.KeyPoint(x, y, 10)
-                    for y in range(0, img.shape[0], 10)
-                        for x in range(0, img.shape[1], 10)]
-    
-    # Given the list of keypoints, compute the local descriptions for every keypoint.
-    (kp, descriptions) = sift.compute(img, keypointGrid)
-    
+
+    descriptions = BOW[i,:];
+    descriptions=np.reshape(descriptions, (84,128))
+    print(i)
+    #print(descriptions.shape)
     tmp = np.zeros(dictionarySize)
-    distances= np.ones((len(descriptions),dictionarySize))
     
     for j in range(len(descriptions)):
         feat = descriptions[j]
@@ -310,8 +301,8 @@ for i in range(n):
 print(features.shape)  
 
 
-np.save('features1.npy', features) 
-np.save('dict.npy', dictionary) 
+np.save('featuresDepth.npy', features) 
+np.save('dictDepth.npy', dictionary) 
 
 classifier = trainAndEvaluate(features, data, n)
 

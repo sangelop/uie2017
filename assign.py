@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Mar 19 14:27:18 2017
-
 @author: Spyros
 """
 
@@ -202,7 +201,7 @@ def trainAndEvaluate(bows, data, n):
 
 
 data = pickle.load(open('data/a1_dataTrain.pkl', 'rb'))
-test = pickle.load(open('data/a1_dataTest.pkl', 'rb'))
+#data = pickle.load(open('data/a1_dataTest.pkl', 'rb'))
 segmentation_images = data['segmentation']
 
 
@@ -229,15 +228,15 @@ mask2 = np.mean(segmentedUser, axis=2) > 150 # For depth images.
 mask3 = np.tile(mask2, (3,1,1)) # For 3-channel images (rgb)
 mask3 = mask3.transpose((1,2,0))
 
-tmp = data['gestureLabels']
-print (tmp[1:100])
+#tmp = data['gestureLabels']
+#print (tmp[1:100])
 
 
 #-----------------------------------------------------------------
 
 # Collect features
 
-n=38000;
+n=1000;
 
 
 dictionarySize = 50
@@ -261,12 +260,13 @@ for i in range(n):
     
     # Given the list of keypoints, compute the local descriptions for every keypoint.
     (kp, descriptions) = sift.compute(img, keypointGrid)
-    print(descriptions.shape)
-    print(i) 
-    for row in range(len(descriptions)):
-	BOW[counter]=descriptions[row,:]
+   # print(descriptions)
+   # print(counter) 
+    for row in range(84):
+        BOW[counter]=descriptions[row,:]
+        counter = counter+1
 
-np.save('bowsift.npy',BOW)
+np.save('testrgb.npy',BOW)
 print("saved")
 
 #dictionary created
@@ -283,7 +283,7 @@ for i in range(n):
     mask2 = np.mean(segmentedUser, axis=2) > 150 # For depth images.
     mask3 = np.tile(mask2, (3,1,1)) # For 3-channel images (rgb)
     mask3 = mask3.transpose((1,2,0))
-    img = sourceImg *mask3
+    img = sourceImg *mask3	
     img = img[:, 10:-10]
     sift = cv2.xfeatures2d.SIFT_create()
     # Create grid of key points.
@@ -318,7 +318,7 @@ classifier = trainAndEvaluate(features, data, n)
 
 #calculate histograms for all images
 #hogs = calculateHogs(n,data,mask3)
-#print("done!")
+#print("done!")	
 
 # reshape to obtain all hog words
 #words =  np.reshape(hogs, (n*64, 8))
